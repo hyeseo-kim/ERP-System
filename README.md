@@ -130,7 +130,7 @@ Spring 기반의 **기업 자원 관리 시스템(ERP)** 입니다.
 ```
 
 <p align="center">
-  <img src="docs/images/flowhart.png" width="600"/>
+  <img src="docs/images/flowchart.png" width="600"/>
 </p>
 
 ---
