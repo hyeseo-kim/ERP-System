@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="co.algorizo.erp.calendarMapper">
+
+	<resultMap id="orderResultMap" type="co.algorizo.erp.order.OrderDTO">
+		<id property="o_no" column="o_no" />
+		<result property="o_code" column="o_code" />
+		<result property="o_regdate" column="o_regdate" />
+
+		<association property="product"
+			javaType="co.algorizo.erp.product.ProductDTO">
+			<id property="p_id" column="product_p_id" />
+			<result property="p_name" column="p_name" />
+		</association>
+	</resultMap>
+	
+	<resultMap id="inspectionMap" type="co.algorizo.erp.inspection.DTO.InspectionDTO">
+		<id property="i_id" column="i_id"/>
+	    <result property="i_date" column="i_date"/>
+	    
+   	    <association property="inboundDTO" javaType="co.algorizo.erp.inbound.inboundDTO">
+	        <id property="in_id" column="in_id"/>
+	        <result property="p_id" column="in_p_id"/>
+	    </association>
+	    
+	    <association property="productDTO" javaType="co.algorizo.erp.product.ProductDTO">
+	        <id property="p_id" column="p_id"/>
+	        <result property="p_name" column="p_name"/>
+	    </association>
+	</resultMap>
+	
+	<resultMap id="outInspectionMap" type="co.algorizo.erp.outinspection.OutInspectionDTO">
+		<id property="oi_id" column="oi_id"/>
+	    <result property="oi_date" column="oi_date"/>
+	    
+   	    <association property="outboundDTO" javaType="co.algorizo.erp.outbound.outboundDTO">
+	        <id property="out_id" column="out_id"/>
+	        <result property="product_p_id" column="p_id"/>
+	    </association>
+
+	    <association property="productDTO" javaType="co.algorizo.erp.product.ProductDTO">
+	        <id property="p_id" column="p_id"/>
+	        <result property="p_name" column="p_name"/>
+	    </association>
+	</resultMap>
+	
+    <resultMap id="inboundresultmap" type="co.algorizo.erp.inbound.inboundDTO">
+        <id property="in_id" column="in_id" />
+        <result property="in_date" column="in_date" />
+        
+        <association property="product" javaType="co.algorizo.erp.product.ProductDTO">
+            <id property="p_id" column="p_id" />
+            <result property="p_name" column="p_name" />
+        </association>
+    </resultMap>
+    
+   	<resultMap type="co.algorizo.erp.outbound.outboundDTO" id="outboundresultmap">
+		<id column="out_id" property="out_id"></id>
+		<result property="out_date" column="out_date"></result>
+
+		<association property="product" javaType="co.algorizo.erp.product.ProductDTO">
+			<id column="p_id" property="p_id"></id>
+			<result property="p_name" column="p_name"></result>
+		</association>
+	</resultMap>
+<!-- 납기일 -->
+	<select id="planDate" parameterType="java.util.Map" resultType="co.algorizo.erp.procurement_plan.DTO.PlanDetailDTO">
+		select pl.plan_id AS plan_id
+		, pp.pp_delivery_date AS pp_delivery_date
+		, p.p_name AS p_name
+		from plan_product pp 
+		join procurement_plan pl on pp.plan_id = pl.plan_id
+		join product p on pp.p_id = p.p_id
+		where pp.pp_delivery_date BETWEEN #{start} AND #{end}
+	</select>
+<!-- 발주일 -->
+	<select id="orderDate" parameterType="java.util.Map" resultMap="orderResultMap">
+		select o.o_code AS o_code
+		, o.o_regdate AS o_regdate
+		, p.p_name AS p_name
+		from `order` o
+		JOIN product p ON o.product_p_id = p.p_id
+		where o.del = 0 AND o.o_regdate BETWEEN #{start} AND #{end}
+	</select>
+<!-- 계약일 -->
+	<select id="contractDate" parameterType="java.util.Map" resultType="co.algorizo.erp.contract.ContractDTO">
+		select c.cr_regdate AS cr_regdate
+		, c.cr_code AS cr_code
+		, cp.cp_name AS cp_name
+		from contract c
+		JOIN company cp ON c.company_cp_id = cp.cp_id
+		where c.del = 0 AND c.cr_regdate BETWEEN #{start} AND #{end}
+	</select>
+<!-- 입고검수 완료일 -->
+	<select id="inspectionDate" parameterType="java.util.Map" resultMap="inspectionMap">
+		select i.i_id AS i_id
+		, i.i_date AS i_date
+		, p.p_name AS p_name
+		from inspection i
+		join inbound ib on i.in_id = ib.in_id
+		join product p on ib.product_p_id = p.p_id
+		where i.i_date BETWEEN #{start} AND #{end}
+	</select>
+<!-- 출고검수 완료일 -->
+	<select id="outInspectionDate" parameterType="java.util.Map" resultMap="outInspectionMap">
+		select oi.oi_id AS oi_id
+		, oi.oi_date AS oi_date
+		, p.p_name AS p_name
+		from out_inspection oi
+		join outbound ob on oi.out_id = ob.out_id
+		join product p on ob.product_p_id = p.p_id
+		where oi.oi_date BETWEEN #{start} AND #{end}
+	</select>
+<!-- 입고일 -->
+	<select id="inboundDate" parameterType="java.util.Map" resultMap="inboundresultmap">
+		select i.in_id AS in_id
+		,i.in_date AS in_date
+		,p.p_name AS p_name
+		from inbound i
+		join product p on i.product_p_id = p.p_id
+		where i.del = 0 AND i.in_date BETWEEN #{start} AND #{end}
+	</select>
+<!-- 출고일 -->
+	<select id="outboundDate" parameterType="java.util.Map" resultMap="outboundresultmap">
+		select o.out_id AS out_id
+		,o.out_date AS out_date
+		,p.p_name AS p_name
+		from outbound o
+		join product p on o.product_p_id = p.p_id
+		where o.del = 0 AND o.out_date BETWEEN #{start} AND #{end}
+	</select>
+</mapper>
+  

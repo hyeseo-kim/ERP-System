@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.algorizo.erp.inboundReceiptMapper">
+	<insert id="insertInboundReceipt">
+	    INSERT INTO inbound_receipt (inre_regdate, inbound_in_id
+	    <if test="arc_arc_id != null">
+	        , arc_arc_id
+	    </if>
+	    ) VALUES (NOW(), #{inbound_in_id}
+	    <if test="arc_arc_id != null">
+	        , #{arc_arc_id}
+	    </if>
+	    )
+	</insert>
+	
+	<select id="selectAllInboundReceipt" resultType="co.algorizo.erp.inbound_receipt.dto.InboundReceiptDTO">
+		SELECT
+			ir.inre_id, (p.p_price * i.in_quantity) AS inre_totalprice, ir.inre_regdate,
+			i.in_id AS inbound_in_id,
+			c.cp_name,
+			p.p_name
+		FROM inbound_receipt ir
+		JOIN inbound i ON ir.inbound_in_id = i.in_id
+		JOIN company c ON i.company_cp_id = c.cp_id
+		JOIN product p ON i.product_p_id = p.p_id
+		ORDER BY ir.inre_id DESC
+			
+	</select>
+	<select id="selectOneInboundReceipt" resultType="co.algorizo.erp.inbound_receipt.dto.InboundReceiptDTO">
+		SELECT
+			ir.inre_id,(p.p_price * i.in_quantity) AS inre_totalprice,
+			a.arc_id AS arc_arc_id, a.arc_name, a.arc_addr, a.arc_fax, a.arc_ceo, a.arc_ctg,
+			c.cp_name, c.cp_addr, c.cp_fax, c.cp_manager, c.cp_ctg,
+			p.p_name, p.p_code, p.p_price,
+			i.in_quantity, i.in_date
+		FROM inbound_receipt ir
+		JOIN arc a ON ir.arc_arc_id = a.arc_id
+		JOIN inbound i ON ir.inbound_in_id = i.in_id
+		JOIN company c ON i.company_cp_id = c.cp_id
+		JOIN product p ON i.product_p_id = p.p_id
+		WHERE ir.inre_id = #{inre_id} 
+	</select>
+	
+	<resultMap id="InboundDTOResultMap" type="co.algorizo.erp.inbound.inboundDTO">
+	    <id property="in_id" column="in_id"/>
+	    <result property="in_date" column="in_date"/>
+	    <result property="in_quantity" column="in_quantity"/>
+	    <result property="product_p_id" column="product_p_id"/>
+	    <result property="company_cp_id" column="company_cp_id"/>
+	    
+	    <!-- ProductDTO 매핑 -->
+	    <association property="product" javaType="co.algorizo.erp.product.ProductDTO">
+	        <id property="p_id" column="product_p_id"/>
+	        <result property="p_name" column="p_name"/>
+	        <result property="p_code" column="p_code"/>
+	        <result property="p_price" column="p_price"/>
+	    </association>
+	
+	    <!-- CompanyDTO 매핑 -->
+	    <association property="company" javaType="co.algorizo.erp.company.CompanyDTO">
+	        <id property="cp_id" column="company_cp_id"/>
+	        <result property="cp_name" column="cp_name"/>
+	        <result property="cp_manager" column="cp_manager"/>
+	        <result property="cp_fax" column="cp_fax"/>
+	    </association>
+	</resultMap>
+	
+	
+	
+	<!-- 입고번호 자동데이터 넣기 -->
+	<select id="getInboundById" resultMap="InboundDTOResultMap">
+	    SELECT 
+	        i.in_id, i.in_date, i.in_quantity, i.product_p_id, i.company_cp_id,
+	        p.p_id AS product_p_id, p.p_name, p.p_code, p.p_price,
+	        c.cp_id AS company_cp_id, c.cp_name, c.cp_manager, c.cp_fax
+	    FROM inbound i
+	    LEFT JOIN product p ON i.product_p_id = p.p_id
+	    LEFT JOIN company c ON i.company_cp_id = c.cp_id
+	    WHERE i.in_id = #{in_id}
+	</select>
+	
+
+</mapper>

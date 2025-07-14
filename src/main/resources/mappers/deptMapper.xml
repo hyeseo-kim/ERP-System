@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.algorizo.erp.deptMapper">
+	<select id="getDeptList" resultType="co.algorizo.erp.dept.dto.DeptDTO">
+		SELECT d_id, team FROM dept ORDER BY d_id ASC;
+	</select>
+	
+	<select id="getDeptById" resultType="co.algorizo.erp.dept.dto.DeptDTO">
+		SELECT d_id, team FROM dept WHERE d_id = #{d_id};
+	</select>
+	
+	
+</mapper>

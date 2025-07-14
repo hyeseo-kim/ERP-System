@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="co.algorizo.erp.companyMapper">
+	
+	<select id="companylist" resultType="co.algorizo.erp.company.CompanyDTO">
+		select * from company where del = 0 order by cp_id desc
+	</select>
+	
+	<select id="getcompany" parameterType="int" resultType="co.algorizo.erp.company.CompanyDTO">
+		select * from company where cp_id = #{cp_id}
+	</select>
+	
+	<update id="companyupdate" parameterType="co.algorizo.erp.company.CompanyDTO" >
+		update company set cp_ctg=#{cp_ctg}, cp_manager=#{cp_manager}, cp_pno=#{cp_pno}, cp_fax=#{cp_fax}, cp_mail=#{cp_mail}, cp_addr=#{cp_addr}, cp_moddate=NOW() where cp_id=#{cp_id}
+	</update>
+	
+	<insert id="companyinsert" parameterType="co.algorizo.erp.company.CompanyDTO">
+		insert into company(cp_name, cp_ctg, cp_manager, cp_pno, cp_mail, cp_fax, cp_addr, cp_regdate, member_m_id)
+		values (#{cp_name}, #{cp_ctg}, #{cp_manager}, #{cp_pno}, #{cp_mail}, #{cp_fax}, #{cp_addr}, NOW(), #{member_m_id})
+	</insert>
+	
+	<update id="companydelete" parameterType="co.algorizo.erp.company.CompanyDTO" >
+		update company set del = 1 where cp_id= #{cp_id}
+	</update>
+	
+	
+</mapper>
+  

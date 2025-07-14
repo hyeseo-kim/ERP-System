@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.algorizo.erp.memberMapper">
+	<!-- 회원등록 -->
+	<insert id="insertMember" parameterType="co.algorizo.erp.register.dto.MemberDTO">
+		INSERT INTO member(m_id, m_name, m_password, m_addr, m_email, role, m_pno, birth, regdate, del, dept_d_id, m_photo)
+		 VALUES(#{m_id}, #{m_name}, #{m_password}, #{m_addr}, #{m_email}, #{role}, #{m_pno}, #{birth}, NOW(), 0, #{dept_d_id}, 'default.png');
+	</insert>
+	
+	<resultMap type="co.algorizo.erp.register.dto.MemberDTO" id="memberDeptMap">
+	
+		<id property="m_id" column="m_id"/>
+		<result property="m_name" column="m_name"/>
+		<result property="m_password" column="m_password"/>
+		<result property="m_addr" column="m_addr"/>
+		<result property="m_email" column="m_email"/>
+		<result property="m_photo" column="m_photo"/>
+		<result property="m_pno" column="m_pno"/>
+		<result property="birth" column="birth"/>
+		<result property="regdate" column="regdate"/>
+		<result property="dept_d_id" column="dept_d_id"/>
+		
+		<association property="dto" javaType="co.algorizo.erp.dept.dto.DeptDTO">
+			<id property="d_id" column="d_id"/>
+			<result property="team" column="team"/>
+		</association>
+	</resultMap>
+	
+	<!-- 전체 사원 조회 -->
+	<select id="memberList" resultMap="memberDeptMap">
+		SELECT
+			m.m_id,m.m_password, m.m_name, m.m_addr, m.m_email, m.m_pno, m.m_photo, m.birth, m.regdate, d.d_id AS dept_d_id, d.team
+		FROM member m
+		JOIN dept d ON m.dept_d_id = d.d_id
+		WHERE del = 0
+		ORDER BY m.regdate ASC;
+	</select>
+	
+	<!-- 단일 사원 조회 -->
+	<select id="selectMember" parameterType="String" resultMap="memberDeptMap">
+		SELECT
+			m.m_id,m.m_password, m.m_name, m.m_addr, m.m_email, m.m_pno, m.m_photo, m.birth, m.regdate, d.d_id AS dept_d_id, d.team
+		FROM member m
+		JOIN dept d ON m.dept_d_id = d.d_id
+		WHERE m.m_id = #{m_id} AND m.del = 0;
+	</select>
+	<!-- 사원 삭제 -->
+	<update id="deleteMember" parameterType="String">
+		UPDATE member SET del = 1 WHERE m_id = #{m_id};
+	</update>
+	
+	<!-- 사원 수정 -->
+	<update id="updateMember" parameterType="co.algorizo.erp.register.dto.MemberDTO">
+		UPDATE member
+		SET m_addr = #{m_addr}, m_email = #{m_email}, m_pno = #{m_pno}, dept_d_id = #{dept_d_id}, m_photo=#{m_photo}
+		WHERE m_id = #{m_id};
+		  
+	</update>
+	
+	
+	
+</mapper>

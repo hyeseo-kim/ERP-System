@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.algorizo.erp.inboundmapper">
+
+	<!-- ResultMap 설정 -->
+	<resultMap id="inboundresultmap"
+		type="co.algorizo.erp.inbound.inboundDTO">
+		<id property="in_id" column="in_id" />
+		<result property="in_date" column="in_date" />
+		<result property="update_date" column="update_date" />
+		<result property="in_status" column="in_status" />
+		<result property="in_quantity" column="in_quantity" />
+		<result property="etc" column="etc" />
+		<result property="del" column="del" />
+		<association property="product"
+			javaType="co.algorizo.erp.product.ProductDTO">
+			<id property="p_id" column="p_id" />
+			<result property="p_code" column="p_code" />
+			<result property="p_name" column="p_name" />
+			<result property="p_price" column="p_price" />
+			<result property="p_lctg" column="p_lctg" />
+			<result property="p_mctg" column="p_mctg" />
+			<result property="p_sctg" column="p_sctg" />
+		</association>
+		<association property="company"
+			javaType="co.algorizo.erp.company.CompanyDTO">
+			<id property="cp_id" column="cp_id" />
+			<result property="cp_name" column="cp_name" />
+			<result property="cp_manager" column="cp_manager" />
+			<result property="cp_fax" column="cp_fax" />
+		</association>
+		<association property="member"
+			javaType="co.algorizo.erp.register.dto.MemberDTO">
+			<id property="m_id" column="m_id" />
+			<result property="m_name" column="m_name" />
+			<result property="m_email" column="m_email" />
+			<result property="m_pno" column="m_pno" />
+		</association>
+		<association property="inspection"
+			javaType="co.algorizo.erp.inspection.DTO.InspectionDTO">
+			<id property="i_id" column="i_id" />
+			<result property="i_quantity" column="i_quantity" />
+			<result property="i_defective_quantity" column="i_defective_quantity" />
+			<result property="i_inspector" column="i_inspector" />
+		</association>
+		<association property="stock"
+			javaType="co.algorizo.erp.stock.stockDTO">
+			<id property="s_id" column="s_id" />
+			<result property="s_quantity" column="s_quantity" />
+		</association>
+	</resultMap>
+
+	<!-- 전체 입고 조회 -->
+	<select id="list" resultMap="inboundresultmap">
+		SELECT
+		inb.*,
+		IFNULL(inb.etc, 'N/A') AS etc,
+		p.p_id AS p_id,
+		p.p_code AS p_code,
+		p.p_name AS p_name,
+		p.p_price AS p_price,
+		c.cp_id AS cp_id,
+		c.cp_name AS cp_name,
+		c.cp_manager AS cp_manager,
+		c.cp_fax AS cp_fax,
+		m.m_id AS m_id,
+		m.m_name AS m_name,
+		m.m_email AS m_email,
+		m.m_pno AS m_pno,
+		ins.i_id AS i_id,
+		s.s_id AS s_id,
+		IFNULL(ins.i_quantity, 0) AS i_quantity,
+		IFNULL(ins.i_defective_quantity, 0) AS i_defective_quantity,
+		(IFNULL(ins.i_quantity, 0) - IFNULL(ins.i_defective_quantity, 0)) AS s_quantity
+		FROM inbound inb
+		JOIN product p ON inb.product_p_id = p.p_id
+		JOIN company c ON inb.company_cp_id = c.cp_id
+		JOIN member m ON inb.member_m_id = m.m_id
+		LEFT JOIN inspection ins ON inb.in_id = ins.in_id
+		LEFT JOIN stock s ON inb.product_p_id = s.product_p_id
+		WHERE inb.del = 0
+		ORDER BY inb.in_id DESC;
+	</select>
+
+	<!-- 입고 상세 조회 -->
+	<select id="detail" parameterType="int"
+		resultMap="inboundresultmap">
+		SELECT
+		inb.*,
+		IFNULL(inb.etc, 'N/A') AS etc,
+		inb.in_status AS in_status,
+		p.p_id AS p_id,
+		p.p_code AS p_code,
+		p.p_name AS p_name,
+		p.p_price AS p_price,
+		p.p_sctg AS p_sctg,
+		p.p_mctg AS p_mctg,
+		p.p_lctg AS p_lctg,
+		c.cp_id AS cp_id,
+		c.cp_name AS cp_name,
+		c.cp_manager AS cp_manager,
+		c.cp_fax AS cp_fax,
+		m.m_id AS m_id,
+		m.m_name AS m_name,
+		m.m_email AS m_email,
+		m.m_pno AS m_pno
+		FROM inbound inb
+		JOIN product p ON inb.product_p_id = p.p_id
+		JOIN company c ON inb.company_cp_id = c.cp_id
+		JOIN member m ON inb.member_m_id = m.m_id
+		WHERE inb.in_id = #{in_id};
+	</select>
+
+	<!-- 입고 등록 -->
+	<insert id="register"
+		parameterType="co.algorizo.erp.inbound.inboundDTO">
+		INSERT INTO inbound (product_p_id, company_cp_id, member_m_id, in_quantity,
+		in_status, del)
+		VALUES (#{product_p_id}, #{company_cp_id}, #{member_m_id}, #{in_quantity},
+		'입고 대기', 0);
+	</insert>
+
+	<!-- 입고 수정 -->
+	<update id="update"
+		parameterType="co.algorizo.erp.inbound.inboundDTO">
+		UPDATE inbound
+		SET in_status = #{in_status},
+		update_date = #{update_date},
+		in_quantity = #{in_quantity}
+		WHERE in_id = #{in_id};
+	</update>
+
+	<!-- 입고 삭제 -->
+	<update id="delete" parameterType="int">
+		UPDATE inbound
+		SET del = 1
+		WHERE in_id = #{in_id};
+	</update>
+
+	<!-- 입고 상태 업데이트 -->
+	<update id="updateInboundStatus" parameterType="Map">
+		UPDATE inbound
+		SET in_status = #{in_status}
+		WHERE in_id = #{in_id};
+	</update>
+
+	<!--재고에 값넣기 -->
+	<update id="stockupdate" parameterType="map">
+		UPDATE stock
+		SET s_quantity = #{s_quantity}
+		WHERE s_id = #{s_id};
+	</update>
+
+</mapper>

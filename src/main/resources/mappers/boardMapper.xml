@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="co.algorizo.erp.boardMapper">
+	
+	<insert id="register">
+		INSERT INTO board (b_title, b_content, b_regdate, b_writer, b_team)
+        VALUES (#{b_title}, #{b_content}, NOW(), #{b_writer}, #{b_team}) 
+	</insert>
+	
+	<select id="list" resultType="co.algorizo.erp.board.BoardDTO">
+		select * from board where del=0 order by b_id desc
+	</select>
+	
+	<select id="detail" parameterType="int" resultType="co.algorizo.erp.board.BoardDTO">
+		select * from board where b_id = #{b_id}
+	</select>
+	
+	<update id="delete" parameterType="int">
+		update board set del = 1 where b_id = #{b_id}
+	</update>
+	
+	<update id="update">
+		update board set b_content = #{b_content}, b_moddate=now() where b_id = #{b_id}
+	</update>
+	
+	<select id="listThree" resultType="co.algorizo.erp.board.BoardDTO">
+    SELECT * 
+    FROM board 
+    WHERE del = 0 
+    ORDER BY b_regdate DESC 
+    LIMIT 3
+</select>
+	
+</mapper>
+  

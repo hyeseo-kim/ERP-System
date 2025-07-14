@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.algorizo.erp.planMapper">
+<!-- 조달 계획 조회 -->
+	<select id="list" resultType="co.algorizo.erp.procurement_plan.DTO.PlanDTO">
+		select plan_id , plan_code , plan_title , plan_writer , plan_regdate
+		from procurement_plan
+		order by plan_regdate desc
+	</select>
+<!-- 조달 계획 상세보기 -->
+	<select id="detail" parameterType="int" resultType="co.algorizo.erp.procurement_plan.DTO.PlanDetailDTO">
+		select pl.plan_id AS plan_id
+			, pl.plan_code AS plan_code
+			, pl.plan_title AS plan_title
+			, pl.plan_writer AS plan_writer
+			, pl.plan_regdate AS plan_regdate
+			, pl.plan_moduser AS plan_moduser
+			, pl.plan_moddate AS plan_moddate
+			, pp.pp_quantity AS pp_quantity
+			, pp.pp_delivery_date AS pp_delivery_date
+			, pp.pp_total_price AS pp_total_price
+			, p.p_id AS p_id
+			, p.p_name AS p_name
+			, p.p_price AS p_price
+		from plan_product pp 
+		join procurement_plan pl on pp.plan_id = pl.plan_id
+		join product p on pp.p_id = p.p_id
+		where pp.plan_id = #{plan_id}
+	</select>
+<!-- 조달 계획 등록 -->
+	<insert id="plan_register" parameterType="co.algorizo.erp.procurement_plan.DTO.PlanDTO" useGeneratedKeys="true" keyProperty="plan_id">
+		insert into procurement_plan (plan_code,plan_title,plan_writer) 
+		values (#{plan_code},#{plan_title},#{plan_writer})
+	</insert>
+<!-- 조달 계획 품목 등록 -->
+	<insert id="product_register" parameterType="co.algorizo.erp.procurement_plan.DTO.PlanProductDTO">
+		insert into plan_product (plan_id,p_id,pp_quantity,pp_delivery_date,pp_total_price) 
+		values (#{plan_id},#{p_id},#{pp_quantity},#{pp_delivery_date},#{pp_total_price})
+	</insert>
+<!-- 조달 계획 수정 -->
+	<update id="update" parameterType="co.algorizo.erp.procurement_plan.DTO.PlanDTO">
+		update procurement_plan 
+		set 
+			plan_title = #{plan_title} ,
+			plan_moddate = #{plan_moddate} ,
+			plan_moduser = #{plan_moduser}
+		where plan_id = #{plan_id}
+	</update>
+<!-- 조달 계획 삭제 -->
+	<delete id="plan_delete" parameterType="int">
+		delete
+		from procurement_plan
+		where plan_id = #{plan_id}
+	</delete>
+<!-- 조달 계획 품목 삭제 -->
+	<delete id="product_delete" parameterType="int">
+		delete
+		from plan_product
+		where plan_id = #{plan_id};
+	</delete>
+<!-- 조달 계획 코드 생성 -->
+	<select id="registerCode" parameterType="java.lang.String" resultType="java.lang.String">
+		select plan_code
+		from procurement_plan
+		where plan_code LIKE CONCAT(#{prefix} , '%')
+		order by plan_code desc
+		limit 1
+	</select>
+</mapper>

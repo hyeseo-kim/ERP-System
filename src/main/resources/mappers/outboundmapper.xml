@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.algorizo.erp.outboundmapper">
+
+	<resultMap type="co.algorizo.erp.outbound.outboundDTO" id="outboundresultmap">
+		<id column="out_id" property="out_id"></id>
+		<result property="out_date" column="out_date"></result>
+		<result property="update_date" column="update_date"></result>
+		<result property="out_status" column="out_status"></result>
+		<result property="out_quantity" column="out_quantity"></result>
+		<result property="etc" column="etc"></result>
+		<result property="del" column="del"></result>
+
+		<association property="product" javaType="co.algorizo.erp.product.ProductDTO">
+			<id column="p_id" property="p_id"></id>
+			<result property="p_code" column="p_code"></result>
+			<result property="p_name" column="p_name"></result>
+			<result property="p_price" column="p_price"></result>
+			<result property="p_lctg" column="p_lctg"></result>
+			<result property="p_mctg" column="p_mctg"></result>
+			<result property="p_sctg" column="p_sctg"></result>
+		</association>
+
+		<association property="member" javaType="co.algorizo.erp.register.dto.MemberDTO">
+			<id column="m_id" property="m_id"></id>
+			<result property="m_name" column="m_name"></result>
+			<result property="m_email" column="m_email"></result>
+			<result property="m_pno" column="m_pno"></result>
+		</association>
+
+		<association property="company" javaType="co.algorizo.erp.company.CompanyDTO">
+			<id column="cp_id" property="cp_id"></id>
+			<result property="cp_name" column="cp_name"></result>
+			<result property="cp_manager" column="cp_manager"></result>
+			<result property="cp_fax" column="cp_fax"></result>
+		</association>
+		
+		<association property="stock"
+			javaType="co.algorizo.erp.stock.stockDTO">
+			<id property="s_id" column="s_id" />
+			<result property="s_quantity" column="s_quantity" />
+		</association>
+		
+		<association property="outinspection"
+			javaType="co.algorizo.erp.outinspection.OutInspectionDTO">
+			<id property="oi_id" column="oi_id" />
+			<result property="oi_quantity" column="oi_quantity" />
+			<result property="oi_defective_quantity"
+				column="oi_defective_quantity" />
+			<result property="oi_inspector" column="oi_inspector" />
+		</association>
+		
+	</resultMap>
+
+	<!-- 출고 전체 조회 -->
+	<select id="list" resultMap="outboundresultmap">
+	SELECT
+    ob.*,
+    IFNULL(ob.etc, 'N/A') AS etc,
+    p.p_id AS p_id,
+    p.p_code AS p_code,
+    p.p_name AS p_name,
+    p.p_price AS p_price,
+    c.cp_id AS cp_id,
+    c.cp_name AS cp_name,
+    c.cp_manager AS cp_manager,
+    c.cp_fax AS cp_fax,
+    m.m_id AS m_id,
+    m.m_name AS m_name,
+    m.m_email AS m_email,
+    m.m_pno AS m_pno,
+    ons.oi_id AS oi_id,
+    s.s_id AS s_id,
+    IFNULL(ons.oi_quantity, 0) AS oi_quantity,
+    IFNULL(ons.oi_defective_quantity, 0) AS oi_defective_quantity,
+    (IFNULL(ons.oi_quantity, 0) - IFNULL(ons.oi_defective_quantity, 0)) AS s_quantity
+FROM outbound ob
+JOIN product p ON ob.product_p_id = p.p_id
+JOIN member m ON ob.member_m_id = m.m_id
+JOIN company c ON ob.company_cp_id = c.cp_id
+LEFT JOIN out_inspection ons ON ob.out_id = ons.out_id
+LEFT JOIN stock s ON ob.product_p_id = s.product_p_id
+WHERE ob.del = 0
+ORDER BY ob.out_id DESC;
+
+	</select>
+
+	<!-- 출고 상세 정보 -->
+	<select id="detail" resultMap="outboundresultmap" parameterType="int">
+		SELECT
+		ob.*,
+		IFNULL(ob.etc, 'N/A') AS etc,
+		ob.out_status AS out_status,
+		p.p_id AS p_id,
+		p.p_code AS p_code,
+		p.p_name AS p_name,
+		p.p_price AS p_price,
+		p.p_sctg AS p_sctg,
+		p.p_mctg AS p_mctg,
+		p.p_lctg AS p_lctg,
+		c.cp_id AS cp_id,
+		c.cp_name AS cp_name,
+		c.cp_manager AS cp_manager,
+		c.cp_fax AS cp_fax,
+		m.m_id AS m_id,
+		m.m_name AS m_name,
+		m.m_email AS m_email,
+		m.m_pno AS m_pno
+		FROM outbound ob
+		JOIN product p ON ob.product_p_id = p.p_id
+		JOIN company c ON ob.company_cp_id = c.cp_id
+		JOIN member m ON ob.member_m_id = m.m_id
+		WHERE ob.out_id = #{out_id};
+	</select>
+
+	<!-- 출고 등록 -->
+	<insert id="register" parameterType="co.algorizo.erp.outbound.outboundDTO">
+		INSERT INTO outbound (product_p_id, company_cp_id, member_m_id, out_quantity, out_status, del)
+		VALUES (#{product_p_id}, #{company_cp_id}, #{member_m_id}, #{out_quantity},'출고 대기', 0);
+	</insert>
+
+	<!-- 출고 수정 -->
+	<update id="update" parameterType="co.algorizo.erp.outbound.outboundDTO">
+		UPDATE outbound SET
+		update_date = #{update_date},
+		out_status = #{out_status},
+		out_quantity = #{out_quantity}
+		WHERE out_id = #{out_id};
+	</update>
+
+	<!-- 출고 삭제 -->
+	<update id="delete" parameterType="Integer">
+		UPDATE outbound SET del = 1 WHERE out_id = #{out_id};
+	</update>
+	
+	<!--재고 > 출고  -->
+	<select id="exceeds" parameterType="int" resultType="int">
+	SELECT s_quantity
+    FROM stock 
+    WHERE product_p_id = #{product_p_id};
+	</select>
+	
+	<!-- 입고 상태 업데이트 -->
+	<update id="updateOutboundStatus" parameterType="Map">
+		UPDATE outbound
+		SET out_status = #{out_status}
+		WHERE out_id = #{out_id};
+	</update>
+	
+	<!--재고에 값넣기 -->
+	<update id="stockupdate" parameterType="map">
+		UPDATE stock
+		SET s_quantity = #{s_quantity}
+		WHERE s_id = #{s_id};
+	</update>
+</mapper>

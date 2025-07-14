@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.algorizo.erp.outInspectionMapper">
+	<resultMap id="outInspectionMap" type="co.algorizo.erp.outinspection.OutInspectionDTO">
+		<id property="oi_id" column="oi_id"/>
+        <result property="out_id" column="out_id"/>
+	    <result property="oi_code" column="oi_code"/>
+	    <result property="oi_date" column="oi_date"/>
+	    <result property="oi_quantity" column="oi_quantity"/>
+	    <result property="oi_defective_quantity" column="oi_defective_quantity"/>
+	    <result property="oi_defect_rate" column="oi_defect_rate"/>
+	    <result property="defect_reason_code" column="defect_reason_code"/>
+	    <result property="oi_custom_reason" column="oi_custom_reason"/>
+	    <result property="oi_result" column="oi_result"/>
+	    <result property="oi_inspector" column="oi_inspector"/>
+	    <result property="oi_moduser" column="oi_moduser"/>
+	    <result property="oi_moddate" column="oi_moddate"/>
+	    <result property="oi_etc" column="oi_etc"/>
+	
+	    <association property="outboundDTO" javaType="co.algorizo.erp.outbound.outboundDTO">
+	        <id property="out_id" column="out_id"/>
+	        <result property="out_date" column="out_date"/>
+	        <result property="out_quantity" column="out_quantity"/>
+	        <result property="product_p_id" column="p_id"/>
+	    </association>
+	
+	    <association property="productDTO" javaType="co.algorizo.erp.product.ProductDTO">
+	        <id property="p_id" column="p_id"/>
+	        <result property="p_lctg" column="p_lctg"/>
+	        <result property="p_mctg" column="p_mctg"/>
+	        <result property="p_sctg" column="p_sctg"/>
+	        <result property="p_code" column="p_code"/>
+	        <result property="p_name" column="p_name"/>
+	    </association>
+	    
+	    <association property="defectReasonDTO" javaType="co.algorizo.erp.inspection.DTO.DefectReasonDTO">
+	        <id property="reason_code" column="reason_code"/>
+	        <result property="reason_name" column="reason_name"/>
+	    </association>
+	    
+	</resultMap>
+	<resultMap id="outboundResultMap"
+		type="co.algorizo.erp.outbound.outboundDTO">
+		<id property="out_id" column="out_id" />
+		<result property="out_date" column="out_date" />
+		<result property="out_status" column="out_status" />
+		<result property="out_quantity" column="out_quantity" />
+
+		<association property="product" javaType="co.algorizo.erp.product.ProductDTO">
+			<id property="p_id" column="p_id" />
+			<result property="p_name" column="p_name" />
+		</association>
+	</resultMap>
+<!-- 출고 검수 조회 -->
+	<select id="list" resultType="co.algorizo.erp.outinspection.OutInspectionDTO">
+		select oi_id , oi_code , out_id , oi_date , oi_inspector , oi_result
+		from out_inspection
+		order by oi_id desc
+	</select>
+<!-- 출고 검수 상세보기 -->
+	<select id="detail" parameterType="int" resultMap="outInspectionMap">
+		select oi.oi_id AS oi_id
+			, oi.oi_code AS oi_code
+			, oi.oi_date AS oi_date
+			, oi.oi_quantity AS oi_quantity
+			, oi.oi_defective_quantity AS oi_defective_quantity
+			, oi.oi_defect_rate AS oi_defect_rate
+			, oi.defect_reason_code AS defect_reason_code
+			, dr.reason_code AS reason_code
+			, dr.reason_name AS reason_name
+			, oi.oi_custom_reason AS oi_custom_reason
+			, oi.oi_result AS oi_result
+			, oi.oi_inspector AS oi_inspector
+			, oi.oi_moduser AS oi_moduser
+			, oi.oi_moddate AS oi_moddate
+			, oi.oi_etc AS oi_etc
+			, ob.out_id AS out_id
+			, ob.out_date AS out_date
+			, ob.out_quantity AS out_quantity
+			, p.p_id AS p_id
+			, p.p_lctg AS p_lctg
+			, p.p_mctg AS p_mctg
+			, p.p_sctg AS p_sctg
+			, p.p_code AS p_code
+			, p.p_name AS p_name
+		from out_inspection oi
+		join outbound ob on oi.out_id = ob.out_id
+		join product p on ob.product_p_id = p.p_id
+		LEFT JOIN defect_reason dr ON oi.defect_reason_code = dr.reason_code
+		
+		where oi.oi_id = #{oi_id}
+	</select>
+<!-- 출고 검수 등록 -->
+	<insert id="register" parameterType="co.algorizo.erp.outinspection.OutInspectionDTO">
+		insert into out_inspection (out_id, oi_code , oi_date , oi_quantity , oi_defective_quantity , defect_reason_code , oi_custom_reason , oi_defect_rate ,oi_result , oi_inspector , oi_etc) 
+		values (#{out_id} , #{oi_code}, #{oi_date}, #{oi_quantity}, #{oi_defective_quantity}, #{defect_reason_code} , #{oi_custom_reason} , #{oi_defect_rate} , #{oi_result}, #{oi_inspector} , #{oi_etc})
+	</insert>
+<!-- 출고 검수 수정 -->
+	<update id="update" parameterType="co.algorizo.erp.outinspection.OutInspectionDTO">
+		update out_inspection 
+		set 
+			out_id = #{out_id} ,
+			oi_result = #{oi_result} ,
+			oi_quantity = #{oi_quantity} ,
+			oi_defective_quantity = #{oi_defective_quantity} ,
+			oi_defect_rate = #{oi_defect_rate} ,
+			defect_reason_code = #{defect_reason_code} ,
+			oi_custom_reason = #{oi_custom_reason} ,
+			oi_moduser = #{oi_moduser} ,
+			oi_moddate = #{oi_moddate} ,
+			oi_etc = #{oi_etc}
+		where oi_id = #{oi_id}
+	</update>
+<!-- 검수 삭제 -->
+	<delete id="delete" parameterType="int">
+		delete
+		from out_inspection
+		where oi_id = #{oi_id}
+	</delete>
+<!-- 검수 코드 생성 -->
+	<select id="registerCode" parameterType="java.lang.String" resultType="java.lang.String">
+		select oi_code
+		from out_inspection
+		where oi_code LIKE CONCAT(#{prefix} , '%')
+		order by oi_code desc
+		limit 1
+	</select>
+<!-- 전체 출고(출고대기 상태) 조회 -->
+	<select id="outboudList" resultMap="outboundResultMap">
+		SELECT o.out_id AS out_id
+		, o.out_date AS out_date
+		, o.out_quantity AS out_quantity
+		, o.out_status AS out_status
+		, p.p_name AS p_name
+		FROM outbound o
+		JOIN product p ON o.product_p_id = p.p_id
+		WHERE o.del = 0 AND o.out_status = "출고 대기";
+	</select>
+<!-- 입고 상태 변경 -->
+	<update id="out_stateUpdate" parameterType="java.util.Map">
+		update outbound
+		set out_status = #{state}
+		where out_id = #{out_id}
+	</update>
+<!-- 불량 사유 가져오기 -->
+	<select id="defect_reason" resultType="co.algorizo.erp.inspection.DTO.DefectReasonDTO">
+		select reason_code , reason_name
+		from defect_reason
+		where del = 0;
+	</select>
+</mapper>

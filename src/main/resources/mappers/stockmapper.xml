@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.algorizo.erp.stockmapper">
+<!--stock수정수정수정  -->
+  <resultMap type="co.algorizo.erp.stock.stockDTO" id="stockresultmap">
+    <id column="s_id" property="s_id" />
+    <result column="s_quantity" property="s_quantity" />
+    <result column="s_status" property="s_status" />
+    <result column="del" property="del" />
+    <result column="etc" property="etc" />
+    
+    <result column="in_date" property="in_date" />
+    <result column="update_date" property="update_date" />
+
+    <association property="inspection">
+      <result column="i_quantity" property="i_quantity" />
+      <result column="i_inspector" property="i_inspector" />
+      <result column="i_defective_quantity" property="i_defective_quantity" />
+    </association>
+
+    <association property="product" javaType="co.algorizo.erp.product.ProductDTO">
+      <result column="p_name" property="p_name" />
+      <result column="p_price" property="p_price" />
+      <result column="p_code" property="p_code" />
+    </association>
+  </resultMap>
+
+
+  <!-- 재고 전체 조회 -->
+  <select id="list" resultMap="stockresultmap">
+    SELECT
+    s.s_id AS s_id,
+    s.s_quantity AS s_quantity,
+    s.s_status AS s_status,
+    s.del AS del,
+    s.etc AS etc,
+    p.p_name AS p_name,
+    p.p_price AS p_price,
+    p.p_code AS p_code,
+    MAX(i.i_inspector) AS i_inspector,
+    MAX(i.i_defective_quantity) AS i_defective_quantity,
+    MAX(inb.in_date) AS in_date,
+    MAX(ob.update_date) AS update_date
+FROM
+    stock s
+JOIN product p ON s.product_p_id = p.p_id
+LEFT JOIN inbound inb ON p.p_id = inb.product_p_id AND inb.del = 0
+LEFT JOIN outbound ob ON p.p_id = ob.product_p_id AND ob.del = 0
+LEFT JOIN inspection i ON inb.in_id = i.in_id
+WHERE
+    s.del = 0
+GROUP BY
+    s.s_id, s.s_quantity, s.s_status, s.del, s.etc, p.p_name, p.p_price, p.p_code
+ORDER BY
+    s.s_quantity DESC,s.s_id DESC;
+</select>
+
+
+  <!-- 재고 상세 정보 -->
+  <select id="detail" resultMap="stockresultmap" parameterType="Integer">
+   SELECT
+    s.s_id AS s_id,
+   	s.s_quantity AS s_quantity, 
+    s.s_status AS s_status,
+    s.del AS del,
+    s.etc AS etc,                         
+    p.p_name,                         
+    p.p_price,                       
+    p.p_code,                         
+    MAX(i.i_inspector) AS i_inspector, 
+    MAX(i.i_defective_quantity) AS i_defective_quantity, 
+    MAX(inb.in_date) AS in_date,      
+    MAX(ob.update_date) AS update_date     
+FROM
+    stock s
+JOIN product p ON s.product_p_id = p.p_id
+LEFT JOIN inbound inb ON p.p_id = inb.product_p_id AND inb.del = 0
+LEFT JOIN outbound ob ON p.p_id = ob.product_p_id AND ob.del = 0
+LEFT JOIN inspection i ON inb.in_id = i.in_id
+WHERE
+    s.s_id = #{s_id} AND
+    s.del = 0
+GROUP BY
+    s.s_id,
+    s.s_status,
+    s.s_quantity,
+    s.del,
+    s.etc,
+    p.p_name,
+    p.p_price,
+    p.p_code;
+  </select>
+
+  <!-- 재고 수량 -->
+  <select id="stocksummary" resultType="co.algorizo.erp.stock.StockSummaryDTO">
+  SELECT
+    p.p_id,
+    p.p_code,
+    p.p_name,
+    SUM(inb.in_quantity) AS in_quantity, 
+    SUM(i.i_defective_quantity) AS i_defective_quantity, 
+    MAX(s.s_quantity) AS s_quantity, 
+    (
+        SELECT 
+            COALESCE(SUM(sub.oi_quantity), 0)
+        FROM (
+            SELECT 
+                DISTINCT outb.product_p_id, 
+                oi.oi_quantity
+            FROM 
+                outbound outb
+            LEFT JOIN out_inspection oi ON outb.out_id = oi.out_id
+            WHERE 
+                outb.product_p_id = p.p_id
+                AND outb.out_status = '출고 완료'
+                AND outb.del = 0
+        ) AS sub
+    ) AS oi_quantity, 
+    i.i_inspector AS i_inspector 
+FROM
+    product p
+JOIN inbound inb ON p.p_id = inb.product_p_id
+JOIN inspection i ON inb.in_id = i.in_id
+JOIN stock s ON p.p_id = s.product_p_id 
+WHERE
+    p.del = 0
+    AND inb.in_status = '입고 완료'
+GROUP BY
+    p.p_id,
+    p.p_code,
+    p.p_name,
+    i.i_inspector;
+
+</select>
+
+<update id="updateStockStatus" parameterType="co.algorizo.erp.stock.stockDTO">
+    UPDATE stock
+    SET s_status = #{s_status}
+    WHERE product_p_id = #{product_p_id};
+</update>
+
+  <insert id="register" parameterType="co.algorizo.erp.stock.stockDTO">
+		INSERT INTO stock (
+			product_p_id,
+			s_status,
+			del,
+			s_quantity,
+			etc
+		) VALUES (
+			#{product_p_id},
+			#{s_status},
+			#{del},
+			#{s_quantity},
+			#{etc}
+		)
+	</insert>
+
+</mapper>

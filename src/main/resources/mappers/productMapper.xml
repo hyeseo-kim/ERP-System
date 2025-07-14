@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="co.algorizo.erp.productMapper">
+
+	<resultMap id="productResultMap"
+    type="co.algorizo.erp.product.ProductDTO">
+    
+    <id property="p_id" column="p_id" />
+    <result property="p_lctg" column="p_lctg" />
+    <result property="p_mctg" column="p_mctg" />
+    <result property="p_sctg" column="p_sctg" />
+    <result property="p_code" column="p_code" />
+    <result property="p_name" column="p_name" />
+    <result property="p_price" column="p_price" />
+    <result property="p_content" column="p_content" />
+    <result property="p_regdate" column="p_regdate" />
+    <result property="p_moddate" column="p_moddate" />
+    <result property="del" column="del" />
+    <result property="member_m_id" column="member_m_id" />
+    <result property="member_m_name" column="member_m_name" />
+    <result property="dept_d_id" column="dept_d_id" />
+    <result property="dept_team" column="team" />
+
+    <!-- ✅ 회사 정보 추가 -->
+    <result property="company_cp_id" column="company_cp_id" />
+    <result property="cp_name" column="cp_name" />
+    <result property="cp_ctg" column="cp_ctg" />
+    
+    <!-- ✅ 수정자 정보 매핑 추가 -->
+    <result property="modifier_m_id" column="modifier_m_id" />
+	<result property="modifier_m_name" column="modifier_m_name" />
+    
+
+    <!-- ✅ 부서 정보 (기존 유지) -->
+    <association property="dept" column="dept_d_id"
+        javaType="co.algorizo.erp.dept.dto.DeptDTO">
+        <id property="d_id" column="d_id" />
+        <result property="team" column="team" />
+    </association>
+
+</resultMap>
+
+
+	<insert id="productinsert"
+		parameterType="co.algorizo.erp.product.ProductDTO" useGeneratedKeys="true" keyProperty="p_id">
+		INSERT INTO product (p_id, p_lctg, p_mctg, p_sctg,
+		p_code, p_name, p_price,
+		p_content, p_regdate, member_m_id, dept_d_id, company_cp_id)
+		VALUES (#{p_id}, #{p_lctg}, #{p_mctg}, #{p_sctg},
+		#{p_code},
+		#{p_name},
+		#{p_price}, #{p_content}, now(), #{member_m_id},
+		#{dept_d_id}, #{company_cp_id})
+	</insert>
+
+	<select id="productlist" resultMap="productResultMap">
+	SELECT p.*,
+    d.d_id, d.team,
+    m.m_name as member_m_name,
+    c.cp_name, c.cp_ctg,
+    modifier.m_name as modifier_m_name
+  FROM product p
+  LEFT JOIN dept d ON p.dept_d_id = d.d_id
+  LEFT JOIN member m ON p.member_m_id = m.m_id
+  LEFT JOIN company c ON p.company_cp_id = c.cp_id
+  LEFT JOIN member modifier ON p.modifier_m_id = modifier.m_id
+  WHERE p.del = 0 ORDER BY p.p_id DESC
+	</select>
+
+	<!-- getProductCode 쿼리 수정 - 컬럼명 명확히 지정 -->
+	<select id="getProductCode" parameterType="String"
+		resultMap="productResultMap">
+				SELECT 
+		p.*,
+		p.modifier_m_id, <!-- ✅ 이 줄 꼭 추가 -->
+		m.m_name as member_m_name,
+		d.d_id,
+		d.team,
+		modifier.m_name as modifier_m_name
+	FROM product p
+	LEFT JOIN member m ON p.member_m_id = m.m_id
+	LEFT JOIN dept d ON p.dept_d_id = d.d_id
+	LEFT JOIN member modifier ON p.modifier_m_id = modifier.m_id
+	WHERE p.p_code = #{p_code}
+	</select>
+
+	<!-- 
+	<select id="getStockQuantity" parameterType="int"
+		resultType="int">
+		SELECT s.s_quantity
+		FROM stock s
+		WHERE s.s_id = #{stock_s_id}
+	</select> -->
+
+
+	<update id="productupdate"
+		parameterType="co.algorizo.erp.product.ProductDTO">
+		update product set
+        p_name=#{p_name},
+        p_content=#{p_content},
+        p_price=#{p_price},
+        company_cp_id=#{company_cp_id},
+        p_moddate=Now(),
+        modifier_m_id=#{modifier_m_id},
+        modifier_m_name=#{modifier_m_name}
+  	  where p_id=#{p_id}
+	</update>
+
+	<update id="productdelete"
+		parameterType="co.algorizo.erp.product.ProductDTO">
+		update product set del = 1 where p_id = #{p_id}
+	</update>
+
+	<select id="getLastOrderCode" resultType="String">
+		SELECT p_code FROM
+		product ORDER BY p_id DESC LIMIT 1;
+	</select>
+
+</mapper>

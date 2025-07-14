@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="co.algorizo.erp.inspectionMapper">
+	<resultMap id="inspectionMap" type="co.algorizo.erp.inspection.DTO.InspectionDTO">
+		<id property="i_id" column="i_id"/>
+        <result property="in_id" column="in_id"/>
+	    <result property="i_code" column="i_code"/>
+	    <result property="i_date" column="i_date"/>
+	    <result property="i_quantity" column="i_quantity"/>
+	    <result property="i_defective_quantity" column="i_defective_quantity"/>
+	    <result property="i_defect_rate" column="i_defect_rate"/>
+	    <result property="defect_reason_code" column="defect_reason_code"/>
+	    <result property="i_custom_reason" column="i_custom_reason"/>
+	    <result property="i_result" column="i_result"/>
+	    <result property="i_inspector" column="i_inspector"/>
+	    <result property="i_moduser" column="i_moduser"/>
+	    <result property="i_moddate" column="i_moddate"/>
+	    <result property="i_etc" column="i_etc"/>
+	
+	    <association property="inboundDTO" javaType="co.algorizo.erp.inbound.inboundDTO">
+	        <id property="in_id" column="in_id"/>
+	        <result property="in_date" column="in_date"/>
+	        <result property="in_quantity" column="in_quantity"/>
+	        <result property="p_id" column="in_p_id"/>
+	    </association>
+	
+	    <association property="productDTO" javaType="co.algorizo.erp.product.ProductDTO">
+	        <id property="p_id" column="p_id"/>
+	        <result property="p_lctg" column="p_lctg"/>
+	        <result property="p_mctg" column="p_mctg"/>
+	        <result property="p_sctg" column="p_sctg"/>
+	        <result property="p_code" column="p_code"/>
+	        <result property="p_name" column="p_name"/>
+	    </association>
+	    
+	    <association property="defectReasonDTO" javaType="co.algorizo.erp.inspection.DTO.DefectReasonDTO">
+	        <id property="reason_code" column="reason_code"/>
+	        <result property="reason_name" column="reason_name"/>
+	    </association>
+	    
+	</resultMap>
+	<resultMap id="inboundresultmap"
+		type="co.algorizo.erp.inbound.inboundDTO">
+		<id property="in_id" column="in_id" />
+		<result property="in_date" column="in_date" />
+		<result property="in_status" column="in_status" />
+		<result property="in_quantity" column="in_quantity" />
+
+		<association property="product" javaType="co.algorizo.erp.product.ProductDTO">
+			<id property="p_id" column="p_id" />
+			<result property="p_name" column="p_name" />
+		</association>
+	</resultMap>
+<!-- 검수 조회 -->
+	<select id="list" resultType="co.algorizo.erp.inspection.DTO.InspectionDTO">
+		select i_id , i_code , in_id , i_date , i_inspector , i_result
+		from inspection
+		order by i_id desc
+	</select>
+<!-- 검수 상세보기 -->
+	<select id="detail" parameterType="int" resultMap="inspectionMap">
+		select i.i_id AS i_id
+			, i.i_code AS i_code
+			, i.i_date AS i_date
+			, i.i_quantity AS i_quantity
+			, i.i_defective_quantity AS i_defective_quantity
+			, i.i_defect_rate AS i_defect_rate
+			, i.defect_reason_code AS defect_reason_code
+			, dr.reason_code AS reason_code
+			, dr.reason_name AS reason_name
+			, i.i_custom_reason AS i_custom_reason
+			, i.i_result AS i_result
+			, i.i_inspector AS i_inspector
+			, i.i_moduser AS i_moduser
+			, i.i_moddate AS i_moddate
+			, i.i_etc AS i_etc
+			, ib.in_id AS in_id
+			, ib.in_date AS in_date
+			, ib.in_quantity AS in_quantity
+			, p.p_id AS p_id
+			, p.p_lctg AS p_lctg
+			, p.p_mctg AS p_mctg
+			, p.p_sctg AS p_sctg
+			, p.p_code AS p_code
+			, p.p_name AS p_name
+		from inspection i
+		join inbound ib on i.in_id = ib.in_id
+		join product p on ib.product_p_id = p.p_id
+		LEFT JOIN defect_reason dr ON i.defect_reason_code = dr.reason_code
+		
+		where i.i_id = #{i_id}
+	</select>
+<!-- 검수 등록 -->
+	<insert id="register" parameterType="co.algorizo.erp.inspection.DTO.InspectionDTO">
+		insert into inspection (in_id, i_code , i_date , i_quantity , i_defective_quantity , defect_reason_code , i_custom_reason , i_defect_rate ,i_result , i_inspector , i_etc) 
+		values (#{in_id} , #{i_code}, #{i_date}, #{i_quantity}, #{i_defective_quantity}, #{defect_reason_code} , #{i_custom_reason} , #{i_defect_rate} , #{i_result}, #{i_inspector} , #{i_etc})
+	</insert>
+<!-- 검수 수정 -->
+	<update id="update" parameterType="co.algorizo.erp.inspection.DTO.InspectionDTO">
+		update inspection 
+		set 
+			in_id = #{in_id} ,
+			i_result = #{i_result} ,
+			i_quantity = #{i_quantity} ,
+			i_defective_quantity = #{i_defective_quantity} ,
+			i_defect_rate = #{i_defect_rate} ,
+			defect_reason_code = #{defect_reason_code} ,
+			i_custom_reason = #{i_custom_reason} ,
+			i_moduser = #{i_moduser} ,
+			i_moddate = #{i_moddate} ,
+			i_etc = #{i_etc}
+		where i_id = #{i_id}
+	</update>
+<!-- 검수 삭제 -->
+	<delete id="delete" parameterType="int">
+		delete
+		from inspection
+		where i_id = #{i_id}
+	</delete>
+<!-- 검수 코드 생성 -->
+	<select id="registerCode" parameterType="java.lang.String" resultType="java.lang.String">
+		select i_code
+		from inspection
+		where i_code LIKE CONCAT(#{prefix} , '%')
+		order by i_code desc
+		limit 1
+	</select>
+<!-- 전체 입고(입고대기 상태) 조회 -->
+	<select id="inboudList" resultMap="inboundresultmap">
+		SELECT i.in_id AS in_id
+		, i.in_date AS in_date
+		, i.in_quantity AS in_quantity
+		, i.in_status AS in_status
+		, p.p_name AS p_name
+		FROM inbound i
+		JOIN product p ON i.product_p_id = p.p_id
+		WHERE i.del = 0 AND i.in_status = "입고 대기";
+	</select>
+<!-- 입고 상태 변경 -->
+	<update id="in_stateUpdate" parameterType="java.util.Map">
+		update inbound
+		set in_status = #{state}
+		where in_id = #{in_id}
+	</update>
+<!-- 불량 사유 가져오기 -->
+	<select id="defect_reason" resultType="co.algorizo.erp.inspection.DTO.DefectReasonDTO">
+		select reason_code , reason_name
+		from defect_reason
+		where del = 0;
+	</select>
+	
+	<select id="chartData" resultType="java.util.Map">
+		SELECT
+		  dr.reason_name AS label,
+		  COUNT(*) AS value
+		FROM inspection i
+		JOIN defect_reason dr ON i.defect_reason_code = dr.reason_code
+		WHERE i.defect_reason_code IS NOT NULL AND i.i_date BETWEEN #{start} AND #{end}
+		GROUP BY dr.reason_name
+		ORDER BY value DESC;
+	</select>	
+</mapper>
