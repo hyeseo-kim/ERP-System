@@ -43,7 +43,8 @@ Spring 기반의 **기업 자원 관리 시스템(ERP)** 입니다.
 - 사원 로그인 및 메인 홈 대시보드 진입
 - 월별 통계차트, 알림 UI 등 표시
 
-<img src="docs/images/login_dashboard.png" width="100%"/>
+<img src="docs/images/login.png" width="100%"/>
+<img src="docs/images/dashboard.png" width="100%"/>
 
 ---
 
@@ -79,6 +80,7 @@ Spring 기반의 **기업 자원 관리 시스템(ERP)** 입니다.
 - 발주 시 해당 품목 및 계약 기반으로 자동 세팅
 
 <img src="docs/images/plan.png" width="100%"/>
+<img src="docs/images/order.png" width="100%"/>
 
 ---
 
@@ -87,7 +89,8 @@ Spring 기반의 **기업 자원 관리 시스템(ERP)** 입니다.
 - 입고 등록 후 검수 -> 수량만큼 재고 증가
 - 검수 완료 후 출고 가능 -> 재고 감소
 
-<img src="docs/images/inbound_register.png" width="100%"/>
+<img src="docs/images/inbound.png" width="100%"/>
+<img src="docs/images/outbound.png" width="100%"/>
 
 ---
 
