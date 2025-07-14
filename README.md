@@ -125,6 +125,8 @@ Spring 기반의 **기업 자원 관리 시스템(ERP)** 입니다.
 ## 프로젝트 구조
 <details>
 <summary>📁 프로젝트 구조 보기</summary>
+
+````text
 erp-system/
 ┣ src/
 ┃ ┣ main/
@@ -158,6 +160,7 @@ erp-system/
 ┃ ┃ ┗ webapp/
 ┣ build.gradle
 ┗ ...
+````
 </details>
 
 
